@@ -79,8 +79,17 @@ class DashboardPayload:
 # --------------------------------------------------------------------------------------
 
 
+UNMAPPED_LABEL = "(미매핑)"
+
+
 def attach_issuer(df: pd.DataFrame, imap: IssuerMap) -> pd.DataFrame:
-    """``brand`` 또는 ``name`` 으로부터 ``issuer`` 컬럼을 채운다."""
+    """``brand`` 또는 ``name`` 으로부터 ``issuer`` 컬럼을 채운다.
+
+    매핑 실패한 종목은 ``UNMAPPED_LABEL`` 로 통일해서 집계 단계에서 누락되지 않도록 한다.
+    이렇게 하면 점유율 분모가 *전체 거래대금*으로 유지되고, 화면에서도 "(미매핑)" 그룹이
+    얼마나 큰지 한눈에 보인다 — 그 자체가 운용사 매핑 yaml 보강이 얼마나 더 필요한지의
+    피드백 루프가 된다.
+    """
     if df.empty:
         df = df.copy()
         df["issuer"] = pd.Series(dtype="string")
@@ -97,11 +106,11 @@ def attach_issuer(df: pd.DataFrame, imap: IssuerMap) -> pd.DataFrame:
     return out
 
 
-def _issuer_from_brand(brand: str | None, imap: IssuerMap) -> str | None:
+def _issuer_from_brand(brand: str | None, imap: IssuerMap) -> str:
     if not brand:
-        return None
+        return UNMAPPED_LABEL
     info: Issuer | None = imap.resolve(brand)
-    return info.issuer if info else None
+    return info.issuer if info else UNMAPPED_LABEL
 
 
 def _first_token(name: str) -> str:
@@ -596,15 +605,48 @@ def save_snapshot(today: pd.DataFrame, listing_today: pd.DataFrame, target_date:
 
 def write_payload(payload: DashboardPayload, *, out_dir: Path) -> Path:
     out_dir.mkdir(parents=True, exist_ok=True)
+    obj = _to_jsonable(payload.to_dict())
     target = out_dir / "latest.json"
     target.write_text(
-        json.dumps(payload.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8"
+        json.dumps(obj, ensure_ascii=False, indent=2, allow_nan=False), encoding="utf-8"
     )
     archive = out_dir / f"snapshot_{payload.as_of.replace('-', '')}.json"
     archive.write_text(
-        json.dumps(payload.to_dict(), ensure_ascii=False), encoding="utf-8"
+        json.dumps(obj, ensure_ascii=False, allow_nan=False), encoding="utf-8"
     )
     return target
+
+
+def _to_jsonable(obj: Any) -> Any:
+    """JSON 표준에 맞게 NaN/Inf/numpy 타입을 정규화한다.
+
+    * float NaN/Inf → None
+    * numpy 정수/실수 → 파이썬 기본형
+    * pandas Timestamp → ISO 문자열
+    * dict/list 재귀
+    """
+    import math
+
+    import numpy as np
+
+    if isinstance(obj, dict):
+        return {k: _to_jsonable(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_to_jsonable(v) for v in obj]
+    if isinstance(obj, float):
+        return None if (math.isnan(obj) or math.isinf(obj)) else obj
+    if isinstance(obj, np.floating):
+        f = float(obj)
+        return None if (math.isnan(f) or math.isinf(f)) else f
+    if isinstance(obj, np.integer):
+        return int(obj)
+    if isinstance(obj, np.bool_):
+        return bool(obj)
+    if isinstance(obj, pd.Timestamp):
+        return obj.isoformat()
+    if obj is pd.NA:
+        return None
+    return obj
 
 
 # --------------------------------------------------------------------------------------
