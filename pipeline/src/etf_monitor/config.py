@@ -36,35 +36,53 @@ ETN_PRICE_URL = f"{DATA_GO_KR_BASE}/GetSecuritiesProductInfoService/getETNPriceI
 KRX_LISTED_INFO_URL = f"{DATA_GO_KR_BASE}/GetKrxListedInfoService/getItemInfo"
 
 # --------------------------------------------------------------------------------------
-# 응답 필드 매핑 (명세서 확인 후 조정)
+# 응답 필드 매핑 — 활용가이드 명세서로 검증 완료 (2026-05)
 # --------------------------------------------------------------------------------------
 
-# 공공데이터포털 시세 API 들이 공통적으로 사용하는 키 이름의 추정값.
-# 명세서 확인 후 실제 키와 다르면 본 매핑 한 곳만 고치면 된다.
+# ETF/ETN 시세 응답 필드. ELW 도 동일 키마.
+# 출처: 공공데이터 오픈API 활용가이드_금융위원회_증권상품시세정보 (data.go.kr/data/15094806).
+#
+# 주의:
+# * 시세 응답에는 시장구분(mrktCtg) 이 포함되지 않는다 → KRX상장종목정보로만 보강.
+# * ETF 의 'nPptTotAmt'(순자산총액) ↔ ETN 의 'indcValTotAmt'(지표가치총액) 는 키 자체가 다르므로
+#   둘 다 시도해 정규화한다 (collect._normalize_price_row 참고).
 PRICE_FIELDS: dict[str, str] = {
-    "base_date": "basDt",       # 기준일자 YYYYMMDD
-    "ticker": "srtnCd",         # 단축코드
-    "isin": "isinCd",           # ISIN
-    "name": "itmsNm",           # 종목명
-    "market": "mrktCtg",        # 시장구분 (ETF/ETN/ELW)
-    "close": "clpr",            # 종가
-    "open": "mkp",              # 시가
-    "high": "hipr",             # 고가
-    "low": "lopr",              # 저가
-    "change": "vs",             # 전일대비
-    "change_rate": "fltRt",     # 등락률(%)
-    "volume": "trqu",           # 거래량
-    "trade_value": "trPrc",     # 거래대금
-    "market_cap": "mrktTotAmt", # 시가총액
-    "nav_total": "nPstgTotAmt", # 순자산총액 (있으면)
+    "base_date": "basDt",            # 기준일자 YYYYMMDD
+    "ticker": "srtnCd",              # 단축코드
+    "isin": "isinCd",                # ISIN코드
+    "name": "itmsNm",                # 종목명
+    "close": "clpr",                 # 종가
+    "open": "mkp",                   # 시가
+    "high": "hipr",                  # 고가
+    "low": "lopr",                   # 저가
+    "change": "vs",                  # 전일대비
+    "change_rate": "fltRt",          # 등락률
+    "volume": "trqu",                # 거래량
+    "trade_value": "trPrc",          # 거래대금
+    "market_cap": "mrktTotAmt",      # 시가총액
+    # ETF: 순자산가치 / ETN: 지표가치
+    "nav": "nav",
+    "nav_etn": "indcVal",
+    # ETF: 순자산총액 / ETN: 지표가치총액
+    "nav_total": "nPptTotAmt",
+    "nav_total_etn": "indcValTotAmt",
+    # ETF: 상장좌수 / ETN/ELW: 상장증권수
+    "listed_count": "stLstgCnt",
+    "listed_count_alt": "lstgScrtCnt",
+    # 기초지수 (ETF/ETN)
+    "underlying_index": "bssIdxIdxNm",
+    "underlying_close": "bssIdxClpr",
 }
 
+# KRX상장종목정보 응답 필드.
+# 출처: 공공데이터 오픈API 활용가이드_금융위원회_KRX상장종목정보 (data.go.kr/data/15094775).
 LISTED_FIELDS: dict[str, str] = {
     "base_date": "basDt",
     "ticker": "srtnCd",
     "isin": "isinCd",
+    "market": "mrktCtg",   # KOSPI / KOSDAQ / KONEX
     "name": "itmsNm",
-    "market": "mrktCtg",
+    "corp_no": "crno",
     "corp_name": "corpNm",
 }
 

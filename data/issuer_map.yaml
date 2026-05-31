@@ -106,13 +106,66 @@ TRUSTON:
   aliases:
     - POWER
 
-# ETN 발행사도 같은 테이블에 둬서 ETF/ETN 합산 분석을 지원합니다.
-# 필요 시 'product_type: ETN'으로 구분 필드를 추가할 수 있습니다.
+# ----------------------------------------------------------------------
+# 추가 ETF 자산운용사 (실데이터 검증으로 추가)
+# ----------------------------------------------------------------------
+
+KIWOOM:
+  issuer: 키움투자자산운용
+  issuer_en: Kiwoom Asset Management
+  aliases: []
+  note: KOSEF·히어로즈와 동일 운용사의 액티브/테마 ETF 브랜드.
+
+1Q:
+  issuer: 하나자산운용
+  issuer_en: Hana Asset Management
+  aliases: []
+
+VITA:
+  issuer: 유리자산운용
+  issuer_en: Yurie Asset Management
+  aliases: []
+
+TREX:
+  issuer: 유리자산운용
+  issuer_en: Yurie Asset Management
+  aliases: []
+  note: VITA 와 동일 운용사의 다른 ETF 브랜드.
+
+에셋플러스:
+  issuer: 에셋플러스자산운용
+  issuer_en: Assetplus Investment Management
+  aliases: []
+
+IBK:
+  issuer: IBK자산운용
+  issuer_en: IBK Asset Management
+  aliases: []
+
+마이티:
+  issuer: 동양자산운용
+  issuer_en: Tongyang Asset Management
+  aliases: []
+
+더제이:
+  issuer: 더제이자산운용
+  issuer_en: TheJ Asset Management
+  aliases: []
+
+아이엠에셋:
+  issuer: 아이엠증권자산운용
+  issuer_en: IM Securities Asset Management
+  aliases: []
+
+# ----------------------------------------------------------------------
+# ETN 발행사 — ETF 자산운용사와 별도 법인이므로 분리 분류
+# ----------------------------------------------------------------------
+
 신한:
   issuer: 신한투자증권 (ETN)
   issuer_en: Shinhan Securities (ETN)
   aliases: []
-  note: ETN 발행사. ETF의 SOL과 동일 그룹이지만 발행사는 증권사라 별도 분류.
+  note: ETN 발행사. ETF 의 SOL 과 동일 그룹이지만 발행사는 증권사라 별도 분류.
 
 삼성:
   issuer: 삼성증권 (ETN)
@@ -129,3 +182,36 @@ TRUSTON:
   issuer_en: Korea Investment & Securities (ETN)
   aliases:
     - 한국투자
+
+메리츠:
+  issuer: 메리츠증권 (ETN)
+  issuer_en: Meritz Securities (ETN)
+  aliases: []
+
+KB:
+  issuer: KB증권 (ETN)
+  issuer_en: KB Securities (ETN)
+  aliases: []
+  note: ETF 의 RISE (KB자산운용) 와 동일 그룹이지만 발행사는 증권사.
+
+N2:
+  issuer: 키움증권 (ETN)
+  issuer_en: Kiwoom Securities (ETN)
+  aliases: []
+
+하나:
+  issuer: 하나증권 (ETN)
+  issuer_en: Hana Securities (ETN)
+  aliases: []
+  note: ETF 의 1Q (하나자산운용) 와 동일 그룹이지만 발행사는 증권사.
+
+키움:
+  issuer: 키움증권 (ETN)
+  issuer_en: Kiwoom Securities (ETN)
+  aliases: []
+  note: KOSEF·히어로즈·KIWOOM 과 동일 그룹의 ETN 발행사.
+
+대신:
+  issuer: 대신증권 (ETN)
+  issuer_en: Daishin Securities (ETN)
+  aliases: []

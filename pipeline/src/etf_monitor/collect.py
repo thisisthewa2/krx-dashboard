@@ -408,37 +408,71 @@ def collect_demo(target_date: date) -> tuple[pd.DataFrame, pd.DataFrame, pd.Data
 def collect_live(
     client: PublicDataClient, target_date: date
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """공공데이터포털에서 당일 ETF 시세와 종목 마스터를 가져온다.
+    """공공데이터포털에서 당일 ETF·ETN 시세를 가져와 마스터/시세를 동시에 만든다.
 
-    ** 응답 필드명은 명세서 확인 필요. ``config.PRICE_FIELDS`` / ``LISTED_FIELDS`` 한 곳만 조정. **
-    이전 일자는 ``data/snapshots/`` 에 누적된 파일에서 합쳐서 history 로 만든다.
+    * ETF 시세 + ETN 시세 응답 자체가 그날 거래된 ETF/ETN 의 마스터이기도 하므로,
+      별도 종목 마스터 호출 없이 ``listing_history`` 도 함께 만든다.
+    * KRX상장종목정보(GetKrxListedInfoService) 는 ``mrktCtg`` (KOSPI/KOSDAQ) 와
+      ``corpNm`` (법인명) 보강 용도로만 호출하며, **실패해도 대시보드 산출은 진행**한다.
+    * 과거 일자는 ``data/snapshots/`` 에 누적된 파일에서 합친다.
     """
     target_str = target_date.strftime("%Y%m%d")
 
-    # 시세 (ETF + ETN)
+    # ----- ETF + ETN 시세 ----------------------------------------------------
     rows: list[dict[str, Any]] = []
-    for endpoint in (cfg.ETF_PRICE_URL, cfg.ETN_PRICE_URL):
+    for endpoint, product_type in (
+        (cfg.ETF_PRICE_URL, "ETF"),
+        (cfg.ETN_PRICE_URL, "ETN"),
+    ):
         try:
             for raw in client.paginate(endpoint, {"basDt": target_str}):
-                rows.append(_normalize_price_row(raw))
+                rows.append(_normalize_price_row(raw, product_type=product_type))
+            logger.info("price collected: %s (cumulative rows=%d)", product_type, len(rows))
         except Exception as exc:  # noqa: BLE001
             logger.warning("price endpoint %s failed: %s", endpoint, exc)
     today_df = pd.DataFrame(rows)
 
-    # 종목 마스터
+    if today_df.empty:
+        logger.warning(
+            "당일(%s) 시세 응답이 비어 있습니다. 영업일이 아니거나 갱신 전일 수 있습니다.",
+            target_date.isoformat(),
+        )
+
+    # ----- KRX상장종목정보로 mrktCtg / corpNm 보강 (옵션) ---------------------
     listed_rows: list[dict[str, Any]] = []
     try:
         for raw in client.paginate(cfg.KRX_LISTED_INFO_URL, {"basDt": target_str}):
             listed_rows.append(_normalize_listed_row(raw))
+        logger.info("listed info collected: %d rows", len(listed_rows))
     except Exception as exc:  # noqa: BLE001
-        logger.warning("listed info endpoint failed: %s", exc)
-    listing_today = pd.DataFrame(listed_rows)
+        logger.warning("listed info endpoint failed (skipping enrichment): %s", exc)
 
-    # 과거 데이터는 snapshots/ 에서 누적분을 읽음
+    if listed_rows and not today_df.empty:
+        listed_df = pd.DataFrame(listed_rows)
+        # ticker 기준 left-join 으로 보강
+        merged = today_df.merge(
+            listed_df[["ticker", "market", "corp_name"]].drop_duplicates("ticker"),
+            on="ticker",
+            how="left",
+            suffixes=("", "_listed"),
+        )
+        # 시세 응답에 'market' 이 None 이라 _listed 도 같이 생기지 않음 → 그대로 사용
+        today_df = merged
+
+    # ----- 시계열 마스터(=신상품 출시 빈도 산출용) ---------------------------
+    listing_today = today_df.assign(
+        date=today_df.get("date", pd.Series(dtype=str))
+    )[["date", "ticker", "name"]].drop_duplicates() if not today_df.empty else pd.DataFrame(
+        columns=["date", "ticker", "name"]
+    )
+
+    # ----- 과거 누적 합치기 --------------------------------------------------
     history = _load_history_from_snapshots()
     listing_history = _load_listing_from_snapshots()
 
-    history = pd.concat([history, today_df], ignore_index=True).drop_duplicates(["date", "ticker"])
+    history = pd.concat([history, today_df], ignore_index=True).drop_duplicates(
+        ["date", "ticker"]
+    )
     listing_history = pd.concat([listing_history, listing_today], ignore_index=True).drop_duplicates(
         ["date", "ticker"]
     )
@@ -446,23 +480,41 @@ def collect_live(
     return today_df, history, listing_history
 
 
-def _normalize_price_row(raw: dict[str, Any]) -> dict[str, Any]:
+def _normalize_price_row(raw: dict[str, Any], *, product_type: str) -> dict[str, Any]:
+    """ETF/ETN 응답 한 건을 공통 키마로 정규화한다.
+
+    ETF 의 ``nPptTotAmt`` 와 ETN 의 ``indcValTotAmt`` 처럼 키가 다른 항목은
+    제품별 alternate 키를 모두 시도한다.
+    """
     f = cfg.PRICE_FIELDS
+
+    def pick(*keys: str) -> Any:
+        for k in keys:
+            v = raw.get(k)
+            if v not in (None, ""):
+                return v
+        return None
+
     return {
         "date": _date_iso(raw.get(f["base_date"])),
         "ticker": str(raw.get(f["ticker"], "")).strip(),
         "isin": raw.get(f["isin"]),
         "name": raw.get(f["name"]),
-        "market": raw.get(f["market"]),
+        "product_type": product_type,
         "close": _to_float(raw.get(f["close"])),
         "open": _to_float(raw.get(f["open"])),
         "high": _to_float(raw.get(f["high"])),
         "low": _to_float(raw.get(f["low"])),
+        "change": _to_float(raw.get(f["change"])),
         "change_rate": _to_float(raw.get(f["change_rate"])),
         "volume": _to_int(raw.get(f["volume"])),
         "trade_value": _to_float(raw.get(f["trade_value"])),
         "market_cap": _to_float(raw.get(f["market_cap"])),
-        "nav_total": _to_float(raw.get(f["nav_total"])),
+        "nav": _to_float(pick(f["nav"], f["nav_etn"])),
+        "nav_total": _to_float(pick(f["nav_total"], f["nav_total_etn"])),
+        "listed_count": _to_int(pick(f["listed_count"], f["listed_count_alt"])),
+        "underlying_index": raw.get(f["underlying_index"]),
+        "underlying_close": _to_float(raw.get(f["underlying_close"])),
     }
 
 
@@ -474,6 +526,7 @@ def _normalize_listed_row(raw: dict[str, Any]) -> dict[str, Any]:
         "isin": raw.get(f["isin"]),
         "name": raw.get(f["name"]),
         "market": raw.get(f["market"]),
+        "corp_no": raw.get(f["corp_no"]),
         "corp_name": raw.get(f["corp_name"]),
     }
 
