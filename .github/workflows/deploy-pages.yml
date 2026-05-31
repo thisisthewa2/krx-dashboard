@@ -1,0 +1,72 @@
+name: Deploy Web (GitHub Pages)
+
+# 트리거:
+#   1. main 브랜치에 web/ 코드 또는 데이터 갱신이 push 될 때
+#   2. Daily Data Collect 워크플로우가 끝났을 때 (데이터 commit 후 자동 재배포)
+#   3. 수동
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/deploy-pages.yml"
+  workflow_run:
+    workflows: ["Daily Data Collect"]
+    types: [completed]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # workflow_run 트리거의 경우 성공한 실행에서만 배포
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Build
+        working-directory: web
+        env:
+          # GitHub Pages 사용자 정의 도메인이 아닌 기본 URL (https://<user>.github.io/<repo>/) 에서
+          # 정적 자산 경로를 맞추기 위해 base path 를 repo 이름으로 강제한다.
+          BASE_PATH: /${{ github.event.repository.name }}/
+        run: npm run build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

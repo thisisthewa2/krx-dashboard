@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "etf-monitor"
+version = "0.1.0"
+description = "KRX ETF 시장 일별 모니터링 파이프라인 (공공데이터포털 기반)"
+requires-python = ">=3.11"
+authors = [{ name = "krx-dashboard contributors" }]
+license = { text = "MIT" }
+dependencies = [
+  "requests>=2.32",
+  "pandas>=2.2",
+  "pyyaml>=6.0",
+  "python-dateutil>=2.9",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "ruff>=0.5",
+]
+
+[project.scripts]
+etf-monitor = "etf_monitor.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

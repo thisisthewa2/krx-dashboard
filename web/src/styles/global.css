@@ -1,0 +1,285 @@
+/* ----------------------------------------------------------------------- */
+/* 디자인 토큰                                                              */
+/* ----------------------------------------------------------------------- */
+:root {
+  --c-bg: #f5f6f8;
+  --c-bg-card: #ffffff;
+  --c-border: #e3e6ec;
+  --c-border-strong: #c9cfd9;
+  --c-text: #14182b;
+  --c-text-muted: #5d6478;
+  --c-text-subtle: #8a91a4;
+
+  --c-accent: #2954a6;
+  --c-accent-soft: #e6edf9;
+  --c-positive: #1f7a4d;
+  --c-negative: #b13b3b;
+  --c-warn: #b07b14;
+  --c-warn-soft: #fbf1d9;
+
+  --shadow-sm: 0 1px 2px rgba(20, 24, 43, 0.04), 0 1px 3px rgba(20, 24, 43, 0.06);
+
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+    "Apple SD Gothic Neo", "Noto Sans KR", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+body {
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ----------------------------------------------------------------------- */
+/* 레이아웃                                                                 */
+/* ----------------------------------------------------------------------- */
+.app-shell {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.app-header {
+  background: var(--c-bg-card);
+  border-bottom: 1px solid var(--c-border);
+  padding: 18px 28px 0 28px;
+}
+.app-header h1 {
+  margin: 0 0 4px 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.app-header .subtitle {
+  margin: 0;
+  color: var(--c-text-muted);
+  font-size: 13px;
+}
+.app-header .header-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.app-header .pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.app-header .pill.warn {
+  background: var(--c-warn-soft);
+  color: var(--c-warn);
+}
+.app-header .pill.muted {
+  background: #eef0f4;
+  color: var(--c-text-muted);
+}
+.app-tabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 18px;
+  margin-bottom: -1px;
+}
+.app-tab {
+  background: transparent;
+  border: none;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--c-text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  font-family: inherit;
+}
+.app-tab:hover {
+  color: var(--c-text);
+}
+.app-tab.active {
+  color: var(--c-accent);
+  border-bottom-color: var(--c-accent);
+}
+
+.app-main {
+  flex: 1 1 auto;
+  padding: 24px 28px;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.app-footer {
+  border-top: 1px solid var(--c-border);
+  background: var(--c-bg-card);
+  padding: 14px 28px;
+  font-size: 12px;
+  color: var(--c-text-muted);
+}
+
+/* ----------------------------------------------------------------------- */
+/* 카드                                                                    */
+/* ----------------------------------------------------------------------- */
+.grid {
+  display: grid;
+  gap: 16px;
+}
+.grid.kpi {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+.grid.cols-2 {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.grid.cols-3 {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+}
+@media (max-width: 920px) {
+  .grid.cols-2,
+  .grid.cols-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  background: var(--c-bg-card);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+}
+.card .card-title {
+  font-size: 13px;
+  color: var(--c-text-muted);
+  font-weight: 500;
+  margin: 0 0 6px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card .card-title .hint {
+  font-size: 11px;
+  color: var(--c-text-subtle);
+  font-weight: 400;
+}
+.card h3 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.card .desc {
+  margin: 0 0 12px 0;
+  color: var(--c-text-muted);
+  font-size: 12px;
+}
+
+/* KPI 카드 */
+.kpi-card .value {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-feature-settings: "tnum";
+  margin-top: 2px;
+}
+.kpi-card .sub {
+  font-size: 12px;
+  color: var(--c-text-subtle);
+  margin-top: 4px;
+  min-height: 14px;
+}
+
+/* ----------------------------------------------------------------------- */
+/* 표                                                                      */
+/* ----------------------------------------------------------------------- */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.table th,
+.table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--c-border);
+  font-feature-settings: "tnum";
+}
+.table th {
+  color: var(--c-text-muted);
+  font-weight: 500;
+  font-size: 12px;
+  background: #fafbfd;
+}
+.table td.num,
+.table th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.table tbody tr:hover {
+  background: #f8f9fb;
+}
+.table .ticker {
+  color: var(--c-text-subtle);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.delta-up {
+  color: var(--c-positive);
+}
+.delta-down {
+  color: var(--c-negative);
+}
+.delta-flat {
+  color: var(--c-text-subtle);
+}
+
+.alert-row {
+  background: #fff7f5;
+}
+
+/* ----------------------------------------------------------------------- */
+/* 미니 인포 영역                                                           */
+/* ----------------------------------------------------------------------- */
+.empty {
+  color: var(--c-text-subtle);
+  font-size: 13px;
+  padding: 20px 0;
+  text-align: center;
+}
+.error {
+  color: var(--c-negative);
+  background: #fff1f1;
+  border: 1px solid #f6c9c9;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+}
+.legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}

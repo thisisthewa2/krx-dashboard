@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# Node
+node_modules/
+.vite/
+.turbo/
+
+# Web build output (배포는 GitHub Actions가 빌드하므로 커밋 안 함)
+web/dist/
+web/tsconfig.tsbuildinfo
+
+# 환경변수 / 인증키
+.env
+.env.local
+.env.*.local
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# 로컬 임시 파일
+*.log
+tmp/
+.cache/

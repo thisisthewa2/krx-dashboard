@@ -1,0 +1,572 @@
+"""파이프라인 본체.
+
+* 데모 모드: 합성 데이터로 산출
+* 실데이터 모드: 공공데이터포털 ETF 시세 + KRX상장종목정보 호출 후 산출
+
+두 모드 모두 동일한 :class:`DashboardPayload` 형태를 만들며, 그 결과를
+``web/public/data/latest.json`` 등 정적 JSON 으로 떨어뜨린다.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+from dataclasses import dataclass
+from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
+from typing import Any
+
+import pandas as pd
+from dateutil import tz
+
+from . import config as cfg
+from . import transform as T
+from .client import PublicDataClient
+from .demo import (
+    DemoSeed,
+    generate_history,
+    generate_listing_history,
+    generate_master,
+)
+from .issuer import Issuer, IssuerMap
+
+logger = logging.getLogger(__name__)
+
+KST = tz.gettz("Asia/Seoul")
+
+
+# --------------------------------------------------------------------------------------
+# 페이로드 모델
+# --------------------------------------------------------------------------------------
+
+
+@dataclass
+class DashboardPayload:
+    as_of: str
+    generated_at: str
+    mode: str  # "demo" | "live"
+    kpis: dict[str, Any]
+    concentration: dict[str, Any]
+    issuer_share: list[dict[str, Any]]
+    issuer_rank: list[dict[str, Any]]
+    new_product_freq: dict[str, Any]
+    alerts: list[dict[str, Any]]
+    dormant: list[dict[str, Any]]
+    concentration_trend: list[dict[str, Any]]
+    reliability: dict[str, Any]
+    schema_version: str = "1.0.0"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "as_of": self.as_of,
+            "generated_at": self.generated_at,
+            "mode": self.mode,
+            "schema_version": self.schema_version,
+            "kpis": self.kpis,
+            "concentration": self.concentration,
+            "issuer_share": self.issuer_share,
+            "issuer_rank": self.issuer_rank,
+            "new_product_freq": self.new_product_freq,
+            "alerts": self.alerts,
+            "dormant": self.dormant,
+            "concentration_trend": self.concentration_trend,
+            "reliability": self.reliability,
+        }
+
+
+# --------------------------------------------------------------------------------------
+# 운용사 매핑 적용
+# --------------------------------------------------------------------------------------
+
+
+def attach_issuer(df: pd.DataFrame, imap: IssuerMap) -> pd.DataFrame:
+    """``brand`` 또는 ``name`` 으로부터 ``issuer`` 컬럼을 채운다."""
+    if df.empty:
+        df = df.copy()
+        df["issuer"] = pd.Series(dtype="string")
+        return df
+
+    if "brand" in df.columns:
+        out = df.copy()
+        out["issuer"] = out["brand"].map(lambda b: _issuer_from_brand(b, imap))
+        return out
+
+    out = df.copy()
+    out["brand"] = out["name"].map(_first_token)
+    out["issuer"] = out["brand"].map(lambda b: _issuer_from_brand(b, imap))
+    return out
+
+
+def _issuer_from_brand(brand: str | None, imap: IssuerMap) -> str | None:
+    if not brand:
+        return None
+    info: Issuer | None = imap.resolve(brand)
+    return info.issuer if info else None
+
+
+def _first_token(name: str) -> str:
+    s = name or ""
+    for sep in (" ", "_", "-"):
+        s = s.replace(sep, " ")
+    return s.strip().split(" ", 1)[0]
+
+
+# --------------------------------------------------------------------------------------
+# 페이로드 산출
+# --------------------------------------------------------------------------------------
+
+
+def build_payload(
+    *,
+    today: pd.DataFrame,            # 당일 (date, ticker, name, brand, close, high, low, volume, trade_value, ...)
+    history: pd.DataFrame,          # 룩백 일자 (today 포함 가능)
+    listing_history: pd.DataFrame,  # KRX 상장종목정보 일별 스냅샷
+    imap: IssuerMap,
+    target_date: date,
+    mode: str,
+    thresholds: cfg.Thresholds,
+) -> DashboardPayload:
+    today = attach_issuer(today, imap)
+    history = attach_issuer(history, imap)
+    listing_history = attach_issuer(listing_history, imap)
+
+    # ----- KPIs --------------------------------------------------------------
+    total_trade_value = float(today["trade_value"].sum()) if not today.empty else 0.0
+    active_count = int((today["trade_value"] > 0).sum()) if not today.empty else 0
+    total_count = int(today["ticker"].nunique()) if not today.empty else 0
+
+    history_excl_today = history[history["date"] != target_date.isoformat()]
+    no_trade_streak = T.consecutive_no_trade_days(
+        history.assign(date=pd.to_datetime(history["date"]))
+    )
+    dormant_mask = no_trade_streak >= thresholds.dormant_consecutive_days
+    dormant_count = int(dormant_mask.sum())
+
+    new_listings_30d = _count_new_listings_recent(
+        listing_history, end=target_date, days=thresholds.new_listing_window_days
+    )
+
+    # ----- 거래 쏠림 ----------------------------------------------------------
+    sorted_today = today.sort_values("trade_value", ascending=False).reset_index(drop=True)
+    top_n_share = {
+        f"top{n}": T.cr_n(sorted_today["trade_value"], n) for n in thresholds.top_n_share
+    }
+    gini_value = T.gini(today["trade_value"]) if not today.empty else 0.0
+
+    # 운용사 단위 HHI (운용사 시장구조 집중도)
+    iss_today = T.issuer_share(today)
+    issuer_hhi = T.hhi(iss_today["trade_value"]) if not iss_today.empty else 0.0
+
+    # 거래대금 분포 히스토그램용 로그 분포
+    log_dist = _log_value_histogram(today["trade_value"])
+
+    # 직전 거래일 운용사 점유율 (순위 변동용)
+    prev_date = _previous_business_date(history, target_date)
+    prev_today = (
+        history[history["date"] == prev_date.isoformat()] if prev_date else history.iloc[0:0]
+    )
+    prev_today = attach_issuer(prev_today, imap)
+    iss_prev = T.issuer_share(prev_today)
+    rank_df = T.rank_movement(iss_today, iss_prev)
+
+    # ----- 신상품 출시 빈도 ---------------------------------------------------
+    new_freq_df = T.new_listings_by_month(listing_history)
+    new_freq = _shape_new_product_freq(new_freq_df, end=target_date, months=6)
+
+    # ----- 이상 신호 (z-score & 일중 변동) ------------------------------------
+    z = T.rolling_zscore(
+        history_excl_today.rename(columns={"volume": "volume"}),
+        today,
+        key="ticker",
+        value="volume",
+        lookback=thresholds.rolling_lookback_days,
+    )
+    today_with_z = today.copy()
+    today_with_z["z_volume"] = today_with_z["ticker"].map(z).fillna(0.0)
+    today_with_z["intraday_range_pct"] = (
+        (today_with_z["high"] - today_with_z["low"]) / today_with_z["close"].replace(0, pd.NA)
+    ).fillna(0.0)
+
+    alert_mask = (today_with_z["z_volume"] >= thresholds.zscore_volume_alert) | (
+        today_with_z["intraday_range_pct"] >= thresholds.intraday_range_pct_alert
+    )
+    alerts_df = today_with_z[alert_mask].sort_values("z_volume", ascending=False).head(20)
+
+    # ----- 휴면 ETF 리스트 ----------------------------------------------------
+    avg_vol = T.avg_volume_window(
+        history.assign(date=pd.to_datetime(history["date"])), window=30
+    )
+    dormant_list = (
+        no_trade_streak[dormant_mask]
+        .reset_index()
+        .rename(columns={"consecutive_no_trade_days": "consecutive_no_trade_days"})
+    )
+    dormant_list = dormant_list.merge(
+        today[["ticker", "name", "issuer"]].drop_duplicates("ticker"),
+        on="ticker",
+        how="left",
+    )
+    dormant_list["avg_volume_30d"] = dormant_list["ticker"].map(avg_vol).fillna(0).astype(int)
+    dormant_list = dormant_list.sort_values("consecutive_no_trade_days", ascending=False).head(30)
+
+    # ----- 집중도 추세 (최근 N일) --------------------------------------------
+    trend = _build_concentration_trend(history, imap, days=20)
+
+    # ----- 신뢰성 메타 --------------------------------------------------------
+    reliability = build_reliability(
+        mode=mode,
+        as_of=target_date.isoformat(),
+        records=total_count,
+        missing=int(today[["close", "trade_value"]].isna().any(axis=1).sum()),
+    )
+
+    return DashboardPayload(
+        as_of=target_date.isoformat(),
+        generated_at=datetime.now(tz=KST).isoformat(timespec="seconds"),
+        mode=mode,
+        kpis={
+            "total_trade_value": total_trade_value,
+            "active_count": active_count,
+            "total_count": total_count,
+            "dormant_count": dormant_count,
+            "new_listings_30d": new_listings_30d,
+        },
+        concentration={
+            **top_n_share,
+            "gini": round(gini_value, 4),
+            "issuer_hhi": round(issuer_hhi, 1),
+            "log_value_histogram": log_dist,
+        },
+        issuer_share=iss_today.to_dict(orient="records"),
+        issuer_rank=rank_df.fillna({"rank_prev": 0, "delta": 0}).to_dict(orient="records"),
+        new_product_freq=new_freq,
+        alerts=[
+            {
+                "ticker": r["ticker"],
+                "name": r["name"],
+                "issuer": r.get("issuer"),
+                "z_volume": round(float(r["z_volume"]), 2),
+                "intraday_range_pct": round(float(r["intraday_range_pct"]), 4),
+                "trade_value": float(r["trade_value"]),
+                "change_rate": float(r.get("change_rate", 0.0)),
+                "reason": _alert_reason(r["z_volume"], r["intraday_range_pct"], thresholds),
+            }
+            for _, r in alerts_df.iterrows()
+        ],
+        dormant=[
+            {
+                "ticker": r["ticker"],
+                "name": r.get("name"),
+                "issuer": r.get("issuer"),
+                "consecutive_no_trade_days": int(r["consecutive_no_trade_days"]),
+                "avg_volume_30d": int(r["avg_volume_30d"]),
+            }
+            for _, r in dormant_list.iterrows()
+        ],
+        concentration_trend=trend,
+        reliability=reliability,
+    )
+
+
+def _alert_reason(z: float, range_pct: float, th: cfg.Thresholds) -> str:
+    parts = []
+    if z >= th.zscore_volume_alert:
+        parts.append(f"거래량 z={z:.1f}")
+    if range_pct >= th.intraday_range_pct_alert:
+        parts.append(f"일중변동 {range_pct * 100:.1f}%")
+    return " · ".join(parts) or "기준 충족"
+
+
+def _previous_business_date(history: pd.DataFrame, target: date) -> date | None:
+    if history.empty:
+        return None
+    dates = sorted({pd.Timestamp(d).date() for d in history["date"]})
+    earlier = [d for d in dates if d < target]
+    return earlier[-1] if earlier else None
+
+
+def _count_new_listings_recent(
+    listing_history: pd.DataFrame, *, end: date, days: int
+) -> int:
+    if listing_history.empty:
+        return 0
+    first_seen = (
+        listing_history.assign(date=pd.to_datetime(listing_history["date"]))
+        .sort_values("date")
+        .groupby("ticker", as_index=False)
+        .first()
+    )
+    cutoff = pd.Timestamp(end) - pd.Timedelta(days=days)
+    return int((first_seen["date"] >= cutoff).sum())
+
+
+def _shape_new_product_freq(df: pd.DataFrame, *, end: date, months: int) -> dict[str, Any]:
+    """프론트가 그리기 좋은 형태로 변형: months 축 + issuer 별 시리즈."""
+    if df.empty:
+        return {"months": [], "series": []}
+
+    end_period = pd.Timestamp(end).to_period("M")
+    start_period = end_period - (months - 1)
+    months_idx = pd.period_range(start_period, end_period, freq="M").strftime("%Y-%m").tolist()
+
+    df = df.copy()
+    df = df[df["month"].isin(months_idx)]
+    pivot = df.pivot_table(index="month", columns="issuer", values="count", fill_value=0)
+    pivot = pivot.reindex(months_idx, fill_value=0)
+    series = []
+    for issuer in pivot.columns:
+        total = int(pivot[issuer].sum())
+        if total == 0:
+            continue
+        series.append({"issuer": issuer, "data": [int(v) for v in pivot[issuer].values]})
+    series.sort(key=lambda s: sum(s["data"]), reverse=True)
+    return {"months": months_idx, "series": series[:10]}
+
+
+def _build_concentration_trend(
+    history: pd.DataFrame, imap: IssuerMap, *, days: int
+) -> list[dict[str, Any]]:
+    if history.empty:
+        return []
+    df = attach_issuer(history, imap)
+    df = df.copy()
+    df["date"] = pd.to_datetime(df["date"])
+    last_dates = sorted(df["date"].unique())[-days:]
+    out = []
+    for d in last_dates:
+        slice_ = df[df["date"] == d]
+        iss = T.issuer_share(slice_)
+        out.append(
+            {
+                "date": pd.Timestamp(d).date().isoformat(),
+                "top10_share": round(T.cr_n(slice_["trade_value"], 10), 4),
+                "issuer_hhi": round(T.hhi(iss["trade_value"]), 1),
+                "gini": round(T.gini(slice_["trade_value"]), 4),
+            }
+        )
+    return out
+
+
+def _log_value_histogram(values: pd.Series, bins: int = 16) -> dict[str, Any]:
+    import math
+
+    arr = [v for v in values.tolist() if v and v > 0]
+    if not arr:
+        return {"bins": [], "counts": []}
+    log_vals = [math.log10(v) for v in arr]
+    lo, hi = min(log_vals), max(log_vals)
+    if hi - lo < 1e-9:
+        return {"bins": [round(lo, 2)], "counts": [len(log_vals)]}
+    edges = [lo + (hi - lo) * i / bins for i in range(bins + 1)]
+    counts = [0] * bins
+    for v in log_vals:
+        idx = min(int((v - lo) / (hi - lo) * bins), bins - 1)
+        counts[idx] += 1
+    return {
+        "bins": [round((edges[i] + edges[i + 1]) / 2, 2) for i in range(bins)],
+        "counts": counts,
+    }
+
+
+# --------------------------------------------------------------------------------------
+# 데이터 신뢰성 메타
+# --------------------------------------------------------------------------------------
+
+
+def build_reliability(*, mode: str, as_of: str, records: int, missing: int) -> dict[str, Any]:
+    if mode == "demo":
+        source = "데모 합성 데이터 (실데이터 아님 — 종목명에 '합성-' 접미사)"
+    else:
+        source = (
+            "공공데이터포털 금융위원회_증권상품시세정보 (15094806) "
+            "+ 금융위원회_KRX상장종목정보 (15094775)"
+        )
+    return {
+        "source": source,
+        "as_of_business_day": as_of,
+        "last_updated_kst": datetime.now(tz=KST).isoformat(timespec="seconds"),
+        "records_collected": records,
+        "missing": missing,
+        "validation": "passed" if missing == 0 else "passed_with_warnings",
+        "demo_mode": mode == "demo",
+    }
+
+
+# --------------------------------------------------------------------------------------
+# 데이터 적재 — demo / live
+# --------------------------------------------------------------------------------------
+
+
+def collect_demo(target_date: date) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    master = generate_master(DemoSeed())
+    history = generate_history(master, end=target_date, days=60)
+    listing = generate_listing_history(master, end=target_date, days=90)
+    today_df = history[history["date"] == target_date.isoformat()].copy()
+    return today_df, history, listing
+
+
+def collect_live(
+    client: PublicDataClient, target_date: date
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """공공데이터포털에서 당일 ETF 시세와 종목 마스터를 가져온다.
+
+    ** 응답 필드명은 명세서 확인 필요. ``config.PRICE_FIELDS`` / ``LISTED_FIELDS`` 한 곳만 조정. **
+    이전 일자는 ``data/snapshots/`` 에 누적된 파일에서 합쳐서 history 로 만든다.
+    """
+    target_str = target_date.strftime("%Y%m%d")
+
+    # 시세 (ETF + ETN)
+    rows: list[dict[str, Any]] = []
+    for endpoint in (cfg.ETF_PRICE_URL, cfg.ETN_PRICE_URL):
+        try:
+            for raw in client.paginate(endpoint, {"basDt": target_str}):
+                rows.append(_normalize_price_row(raw))
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("price endpoint %s failed: %s", endpoint, exc)
+    today_df = pd.DataFrame(rows)
+
+    # 종목 마스터
+    listed_rows: list[dict[str, Any]] = []
+    try:
+        for raw in client.paginate(cfg.KRX_LISTED_INFO_URL, {"basDt": target_str}):
+            listed_rows.append(_normalize_listed_row(raw))
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("listed info endpoint failed: %s", exc)
+    listing_today = pd.DataFrame(listed_rows)
+
+    # 과거 데이터는 snapshots/ 에서 누적분을 읽음
+    history = _load_history_from_snapshots()
+    listing_history = _load_listing_from_snapshots()
+
+    history = pd.concat([history, today_df], ignore_index=True).drop_duplicates(["date", "ticker"])
+    listing_history = pd.concat([listing_history, listing_today], ignore_index=True).drop_duplicates(
+        ["date", "ticker"]
+    )
+
+    return today_df, history, listing_history
+
+
+def _normalize_price_row(raw: dict[str, Any]) -> dict[str, Any]:
+    f = cfg.PRICE_FIELDS
+    return {
+        "date": _date_iso(raw.get(f["base_date"])),
+        "ticker": str(raw.get(f["ticker"], "")).strip(),
+        "isin": raw.get(f["isin"]),
+        "name": raw.get(f["name"]),
+        "market": raw.get(f["market"]),
+        "close": _to_float(raw.get(f["close"])),
+        "open": _to_float(raw.get(f["open"])),
+        "high": _to_float(raw.get(f["high"])),
+        "low": _to_float(raw.get(f["low"])),
+        "change_rate": _to_float(raw.get(f["change_rate"])),
+        "volume": _to_int(raw.get(f["volume"])),
+        "trade_value": _to_float(raw.get(f["trade_value"])),
+        "market_cap": _to_float(raw.get(f["market_cap"])),
+        "nav_total": _to_float(raw.get(f["nav_total"])),
+    }
+
+
+def _normalize_listed_row(raw: dict[str, Any]) -> dict[str, Any]:
+    f = cfg.LISTED_FIELDS
+    return {
+        "date": _date_iso(raw.get(f["base_date"])),
+        "ticker": str(raw.get(f["ticker"], "")).strip(),
+        "isin": raw.get(f["isin"]),
+        "name": raw.get(f["name"]),
+        "market": raw.get(f["market"]),
+        "corp_name": raw.get(f["corp_name"]),
+    }
+
+
+def _date_iso(s: Any) -> str | None:
+    if s is None:
+        return None
+    s = str(s)
+    if len(s) == 8 and s.isdigit():
+        return f"{s[0:4]}-{s[4:6]}-{s[6:8]}"
+    return s
+
+
+def _to_float(v: Any) -> float | None:
+    if v is None or v == "":
+        return None
+    try:
+        return float(str(v).replace(",", ""))
+    except ValueError:
+        return None
+
+
+def _to_int(v: Any) -> int | None:
+    f = _to_float(v)
+    return int(f) if f is not None else None
+
+
+def _load_history_from_snapshots() -> pd.DataFrame:
+    out = []
+    for p in sorted(cfg.SNAPSHOTS_DIR.glob("price_*.json")):
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+            out.extend(data)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("snapshot %s skipped: %s", p, exc)
+    return pd.DataFrame(out)
+
+
+def _load_listing_from_snapshots() -> pd.DataFrame:
+    out = []
+    for p in sorted(cfg.SNAPSHOTS_DIR.glob("listing_*.json")):
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+            out.extend(data)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("snapshot %s skipped: %s", p, exc)
+    return pd.DataFrame(out)
+
+
+def save_snapshot(today: pd.DataFrame, listing_today: pd.DataFrame, target_date: date) -> None:
+    cfg.SNAPSHOTS_DIR.mkdir(parents=True, exist_ok=True)
+    target_str = target_date.strftime("%Y%m%d")
+    if not today.empty:
+        (cfg.SNAPSHOTS_DIR / f"price_{target_str}.json").write_text(
+            today.to_json(orient="records", force_ascii=False), encoding="utf-8"
+        )
+    if not listing_today.empty:
+        (cfg.SNAPSHOTS_DIR / f"listing_{target_str}.json").write_text(
+            listing_today.to_json(orient="records", force_ascii=False), encoding="utf-8"
+        )
+
+
+# --------------------------------------------------------------------------------------
+# 산출
+# --------------------------------------------------------------------------------------
+
+
+def write_payload(payload: DashboardPayload, *, out_dir: Path) -> Path:
+    out_dir.mkdir(parents=True, exist_ok=True)
+    target = out_dir / "latest.json"
+    target.write_text(
+        json.dumps(payload.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    archive = out_dir / f"snapshot_{payload.as_of.replace('-', '')}.json"
+    archive.write_text(
+        json.dumps(payload.to_dict(), ensure_ascii=False), encoding="utf-8"
+    )
+    return target
+
+
+# --------------------------------------------------------------------------------------
+# 영업일 계산
+# --------------------------------------------------------------------------------------
+
+
+def previous_business_day(today: date | None = None) -> date:
+    """주말 제외한 직전 영업일. 공휴일은 무시(보수적 추정)."""
+    base = today or datetime.now(tz=KST).date()
+    cur = base - timedelta(days=1)
+    while cur.weekday() >= 5:
+        cur -= timedelta(days=1)
+    return cur
+
+
+def now_utc_iso() -> str:
+    return datetime.now(tz=timezone.utc).isoformat(timespec="seconds")
