@@ -1,6 +1,6 @@
 {
   "as_of": "2026-05-28",
-  "generated_at": "2026-05-31T21:51:18+09:00",
+  "generated_at": "2026-05-31T21:58:39+09:00",
   "mode": "live",
   "schema_version": "1.0.0",
   "kpis": {
@@ -15,7 +15,7 @@
     "top10": 0.474318465392962,
     "top50": 0.8127939769243374,
     "gini": 0.948,
-    "issuer_hhi": 3712.6,
+    "issuer_hhi": 3711.9,
     "log_value_histogram": {
       "bins": [
         3.96,
@@ -106,11 +106,18 @@
       "ticker_count_share": 0.0548216644649934
     },
     {
-      "issuer": "(미매핑)",
-      "trade_value": 457919501509.0,
-      "ticker_count": 61,
-      "trade_value_share": 0.011522581797312718,
-      "ticker_count_share": 0.040290620871862616
+      "issuer": "타임폴리오자산운용",
+      "trade_value": 246577252748.0,
+      "ticker_count": 19,
+      "trade_value_share": 0.006204598307743486,
+      "ticker_count_share": 0.012549537648612946
+    },
+    {
+      "issuer": "코레이트자산운용",
+      "trade_value": 180822223322.0,
+      "ticker_count": 23,
+      "trade_value_share": 0.004550011196583079,
+      "ticker_count_share": 0.015191545574636724
     },
     {
       "issuer": "하나자산운용",
@@ -153,6 +160,13 @@
       "ticker_count": 14,
       "trade_value_share": 0.0007929197719353861,
       "ticker_count_share": 0.009247027741083224
+    },
+    {
+      "issuer": "KCGI자산운용",
+      "trade_value": 29331278176.0,
+      "ticker_count": 6,
+      "trade_value_share": 0.0007380599666294204,
+      "ticker_count_share": 0.003963011889035667
     },
     {
       "issuer": "하나증권 (ETN)",
@@ -205,10 +219,10 @@
     },
     {
       "issuer": "BNK자산운용",
-      "trade_value": 2483451223.0,
-      "ticker_count": 6,
-      "trade_value_share": 6.249083029299941e-05,
-      "ticker_count_share": 0.003963011889035667
+      "trade_value": 3492815056.0,
+      "ticker_count": 11,
+      "trade_value_share": 8.78893496630311e-05,
+      "ticker_count_share": 0.00726552179656539
     },
     {
       "issuer": "동양자산운용",
@@ -232,11 +246,11 @@
       "ticker_count_share": 0.002642007926023778
     },
     {
-      "issuer": "KCGI자산운용",
-      "trade_value": 230523230.0,
-      "ticker_count": 1,
-      "trade_value_share": 5.800632567738605e-06,
-      "ticker_count_share": 0.0006605019815059445
+      "issuer": "대신자산운용",
+      "trade_value": 303276903.0,
+      "ticker_count": 3,
+      "trade_value_share": 7.631325834644526e-06,
+      "ticker_count_share": 0.0019815059445178335
     },
     {
       "issuer": "트러스톤자산운용",
@@ -244,6 +258,13 @@
       "ticker_count": 2,
       "trade_value_share": 2.9735740358961165e-06,
       "ticker_count_share": 0.001321003963011889
+    },
+    {
+      "issuer": "흥국자산운용",
+      "trade_value": 106629757.0,
+      "ticker_count": 6,
+      "trade_value_share": 2.6831137197941117e-06,
+      "ticker_count_share": 0.003963011889035667
     },
     {
       "issuer": "유리자산운용",
@@ -318,147 +339,165 @@
       "delta": 0
     },
     {
-      "issuer": "(미매핑)",
+      "issuer": "타임폴리오자산운용",
       "rank_today": 8,
       "rank_prev": 8,
       "delta": 0
     },
     {
-      "issuer": "하나자산운용",
+      "issuer": "코레이트자산운용",
       "rank_today": 9,
       "rank_prev": 9,
       "delta": 0
     },
     {
-      "issuer": "키움투자자산운용",
+      "issuer": "하나자산운용",
       "rank_today": 10,
       "rank_prev": 10,
       "delta": 0
     },
     {
-      "issuer": "삼성증권 (ETN)",
+      "issuer": "키움투자자산운용",
       "rank_today": 11,
-      "rank_prev": 12,
+      "rank_prev": 11,
+      "delta": 0
+    },
+    {
+      "issuer": "삼성증권 (ETN)",
+      "rank_today": 12,
+      "rank_prev": 13,
       "delta": 1
     },
     {
       "issuer": "미래에셋증권 (ETN)",
-      "rank_today": 12,
-      "rank_prev": 11,
+      "rank_today": 13,
+      "rank_prev": 12,
       "delta": -1
     },
     {
       "issuer": "키움증권 (ETN)",
-      "rank_today": 13,
-      "rank_prev": 15,
-      "delta": 2
+      "rank_today": 14,
+      "rank_prev": 17,
+      "delta": 3
     },
     {
       "issuer": "신영자산운용",
-      "rank_today": 14,
-      "rank_prev": 13,
+      "rank_today": 15,
+      "rank_prev": 14,
+      "delta": -1
+    },
+    {
+      "issuer": "KCGI자산운용",
+      "rank_today": 16,
+      "rank_prev": 15,
       "delta": -1
     },
     {
       "issuer": "하나증권 (ETN)",
-      "rank_today": 15,
-      "rank_prev": 22,
+      "rank_today": 17,
+      "rank_prev": 24,
       "delta": 7
     },
     {
       "issuer": "IBK자산운용",
-      "rank_today": 16,
-      "rank_prev": 16,
+      "rank_today": 18,
+      "rank_prev": 18,
       "delta": 0
     },
     {
       "issuer": "신한투자증권 (ETN)",
-      "rank_today": 17,
-      "rank_prev": 23,
+      "rank_today": 19,
+      "rank_prev": 25,
       "delta": 6
     },
     {
       "issuer": "메리츠증권 (ETN)",
-      "rank_today": 18,
-      "rank_prev": 19,
+      "rank_today": 20,
+      "rank_prev": 21,
       "delta": 1
     },
     {
       "issuer": "KB증권 (ETN)",
-      "rank_today": 19,
-      "rank_prev": 17,
+      "rank_today": 21,
+      "rank_prev": 19,
       "delta": -2
     },
     {
       "issuer": "한국투자증권 (ETN)",
-      "rank_today": 20,
-      "rank_prev": 24,
+      "rank_today": 22,
+      "rank_prev": 26,
       "delta": 4
     },
     {
       "issuer": "교보악사자산운용",
-      "rank_today": 21,
-      "rank_prev": 20,
+      "rank_today": 23,
+      "rank_prev": 22,
       "delta": -1
     },
     {
       "issuer": "BNK자산운용",
-      "rank_today": 22,
-      "rank_prev": 18,
+      "rank_today": 24,
+      "rank_prev": 20,
       "delta": -4
     },
     {
       "issuer": "동양자산운용",
-      "rank_today": 23,
-      "rank_prev": 14,
+      "rank_today": 25,
+      "rank_prev": 16,
       "delta": -9
     },
     {
       "issuer": "에셋플러스자산운용",
-      "rank_today": 24,
-      "rank_prev": 25,
-      "delta": 1
-    },
-    {
-      "issuer": "마이다스에셋자산운용",
-      "rank_today": 25,
-      "rank_prev": 21,
-      "delta": -4
-    },
-    {
-      "issuer": "KCGI자산운용",
       "rank_today": 26,
       "rank_prev": 28,
       "delta": 2
     },
     {
-      "issuer": "트러스톤자산운용",
+      "issuer": "마이다스에셋자산운용",
       "rank_today": 27,
-      "rank_prev": 26,
-      "delta": -1
+      "rank_prev": 23,
+      "delta": -4
+    },
+    {
+      "issuer": "대신자산운용",
+      "rank_today": 28,
+      "rank_prev": 29,
+      "delta": 1
+    },
+    {
+      "issuer": "트러스톤자산운용",
+      "rank_today": 29,
+      "rank_prev": 30,
+      "delta": 1
+    },
+    {
+      "issuer": "흥국자산운용",
+      "rank_today": 30,
+      "rank_prev": 27,
+      "delta": -3
     },
     {
       "issuer": "유리자산운용",
-      "rank_today": 28,
-      "rank_prev": 27,
-      "delta": -1
+      "rank_today": 31,
+      "rank_prev": 31,
+      "delta": 0
     },
     {
       "issuer": "아이엠증권자산운용",
-      "rank_today": 29,
-      "rank_prev": 29,
+      "rank_today": 32,
+      "rank_prev": 32,
       "delta": 0
     },
     {
       "issuer": "대신증권 (ETN)",
-      "rank_today": 30,
-      "rank_prev": 30,
+      "rank_today": 33,
+      "rank_prev": 33,
       "delta": 0
     },
     {
       "issuer": "더제이자산운용",
-      "rank_today": 31,
-      "rank_prev": 31,
+      "rank_today": 34,
+      "rank_prev": 34,
       "delta": 0
     }
   ],
@@ -561,17 +600,6 @@
         ]
       },
       {
-        "issuer": "(미매핑)",
-        "data": [
-          0,
-          0,
-          0,
-          58,
-          4,
-          3
-        ]
-      },
-      {
         "issuer": "한국투자증권 (ETN)",
         "data": [
           0,
@@ -580,6 +608,17 @@
           56,
           1,
           4
+        ]
+      },
+      {
+        "issuer": "KB증권 (ETN)",
+        "data": [
+          0,
+          0,
+          0,
+          52,
+          6,
+          0
         ]
       }
     ]
@@ -628,7 +667,7 @@
     {
       "ticker": "0073X0",
       "name": "FOCUS 알리바바미국채커버드콜혼합",
-      "issuer": "(미매핑)",
+      "issuer": "BNK자산운용",
       "z_volume": 7.04,
       "intraday_range_pct": 0.0141,
       "trade_value": 348137964.0,
@@ -792,261 +831,299 @@
       "name": "ACE 러시아MSCI(합성)",
       "issuer": "한국투자신탁운용",
       "consecutive_no_trade_days": 57,
-      "avg_volume_30d": 0
+      "avg_volume_30d": 0,
+      "days_since_last_seen": 0,
+      "delisted_candidate": false
     },
     {
       "ticker": "610066",
       "name": "메리츠 KAP 통안채 3개월 ETN",
       "issuer": "메리츠증권 (ETN)",
       "consecutive_no_trade_days": 57,
-      "avg_volume_30d": 0
+      "avg_volume_30d": 0,
+      "days_since_last_seen": 0,
+      "delisted_candidate": false
     },
     {
       "ticker": "500091",
       "name": "신한 33-12 국고채 플러스 ETN",
       "issuer": "신한투자증권 (ETN)",
       "consecutive_no_trade_days": 57,
-      "avg_volume_30d": 0
+      "avg_volume_30d": 0,
+      "days_since_last_seen": 0,
+      "delisted_candidate": false
     },
     {
       "ticker": "550082",
       "name": "N2 KIS CD금리투자 ETN",
       "issuer": "키움증권 (ETN)",
       "consecutive_no_trade_days": 57,
-      "avg_volume_30d": 0
+      "avg_volume_30d": 0,
+      "days_since_last_seen": 0,
+      "delisted_candidate": false
     },
     {
       "ticker": "500088",
-      "name": null,
-      "issuer": null,
+      "name": "신한 2X 26-05 은행채(AAA) ETN",
+      "issuer": "신한투자증권 (ETN)",
       "consecutive_no_trade_days": 45,
-      "avg_volume_30d": 0
+      "avg_volume_30d": 0,
+      "days_since_last_seen": 17,
+      "delisted_candidate": true
     },
     {
       "ticker": "500090",
-      "name": null,
-      "issuer": null,
+      "name": "신한 2X 26-05 공사채(AAA) ETN",
+      "issuer": "신한투자증권 (ETN)",
       "consecutive_no_trade_days": 45,
-      "avg_volume_30d": 0
+      "avg_volume_30d": 0,
+      "days_since_last_seen": 17,
+      "delisted_candidate": true
     },
     {
       "ticker": "610051",
       "name": "메리츠 인버스 국채5년 ETN",
       "issuer": "메리츠증권 (ETN)",
       "consecutive_no_trade_days": 38,
-      "avg_volume_30d": 0
+      "avg_volume_30d": 0,
+      "days_since_last_seen": 0,
+      "delisted_candidate": false
     },
     {
       "ticker": "610058",
       "name": "메리츠 인버스 3X 국채5년 ETN",
       "issuer": "메리츠증권 (ETN)",
       "consecutive_no_trade_days": 38,
-      "avg_volume_30d": 0
+      "avg_volume_30d": 0,
+      "days_since_last_seen": 0,
+      "delisted_candidate": false
     },
     {
       "ticker": "610025",
       "name": "메리츠 인버스 2X 미국채10년 ETN(H)",
       "issuer": "메리츠증권 (ETN)",
       "consecutive_no_trade_days": 35,
-      "avg_volume_30d": 0
+      "avg_volume_30d": 0,
+      "days_since_last_seen": 0,
+      "delisted_candidate": false
     },
     {
       "ticker": "500078",
-      "name": null,
-      "issuer": null,
+      "name": "신한 S&P 유로 선물 ETN(H)",
+      "issuer": "신한투자증권 (ETN)",
       "consecutive_no_trade_days": 21,
-      "avg_volume_30d": 0
+      "avg_volume_30d": 0,
+      "days_since_last_seen": 8,
+      "delisted_candidate": false
     },
     {
       "ticker": "570109",
       "name": "한투 레버리지미국채30년 ETN",
       "issuer": "한국투자증권 (ETN)",
       "consecutive_no_trade_days": 20,
-      "avg_volume_30d": 1
+      "avg_volume_30d": 1,
+      "days_since_last_seen": 0,
+      "delisted_candidate": false
     },
     {
       "ticker": "610049",
       "name": "메리츠 국채5년 ETN",
       "issuer": "메리츠증권 (ETN)",
       "consecutive_no_trade_days": 20,
-      "avg_volume_30d": 0
+      "avg_volume_30d": 0,
+      "days_since_last_seen": 0,
+      "delisted_candidate": false
     },
     {
       "ticker": "610081",
       "name": "메리츠 레버리지 멕시코 페소화 ETN",
       "issuer": "메리츠증권 (ETN)",
       "consecutive_no_trade_days": 18,
-      "avg_volume_30d": 9
+      "avg_volume_30d": 9,
+      "days_since_last_seen": 0,
+      "delisted_candidate": false
     },
     {
       "ticker": "610084",
       "name": "메리츠 미국채30년 스트립 ETN(H)",
       "issuer": "메리츠증권 (ETN)",
       "consecutive_no_trade_days": 14,
-      "avg_volume_30d": 0
+      "avg_volume_30d": 0,
+      "days_since_last_seen": 0,
+      "delisted_candidate": false
     },
     {
       "ticker": "700023",
       "name": "하나 Solactive 2X US Tech Top 10 ETN(H)",
       "issuer": "하나증권 (ETN)",
       "consecutive_no_trade_days": 14,
-      "avg_volume_30d": 3
+      "avg_volume_30d": 3,
+      "days_since_last_seen": 0,
+      "delisted_candidate": false
     },
     {
       "ticker": "580062",
       "name": "KB 레버리지 미국채 30년 ETN",
       "issuer": "KB증권 (ETN)",
       "consecutive_no_trade_days": 12,
-      "avg_volume_30d": 14
+      "avg_volume_30d": 14,
+      "days_since_last_seen": 0,
+      "delisted_candidate": false
     },
     {
       "ticker": "510044",
       "name": "대신 레버리지 미국달러 선물 ETN",
       "issuer": "대신증권 (ETN)",
       "consecutive_no_trade_days": 12,
-      "avg_volume_30d": 1
+      "avg_volume_30d": 1,
+      "days_since_last_seen": 0,
+      "delisted_candidate": false
     },
     {
       "ticker": "700022",
       "name": "하나 Solactive US Tech Top 10 ETN(H)",
       "issuer": "하나증권 (ETN)",
       "consecutive_no_trade_days": 12,
-      "avg_volume_30d": 1
+      "avg_volume_30d": 1,
+      "days_since_last_seen": 0,
+      "delisted_candidate": false
     },
     {
       "ticker": "580063",
       "name": "KB 레버리지 미국채 10년 선물 ETN",
       "issuer": "KB증권 (ETN)",
       "consecutive_no_trade_days": 11,
-      "avg_volume_30d": 1
+      "avg_volume_30d": 1,
+      "days_since_last_seen": 0,
+      "delisted_candidate": false
     }
   ],
   "concentration_trend": [
     {
       "date": "2026-04-28",
       "top10_share": 0.4193,
-      "issuer_hhi": 3708.4,
+      "issuer_hhi": 3706.4,
       "gini": 0.9303
     },
     {
       "date": "2026-04-29",
       "top10_share": 0.4218,
-      "issuer_hhi": 3613.9,
+      "issuer_hhi": 3612.0,
       "gini": 0.9321
     },
     {
       "date": "2026-04-30",
       "top10_share": 0.4231,
-      "issuer_hhi": 3807.4,
+      "issuer_hhi": 3805.6,
       "gini": 0.9312
     },
     {
       "date": "2026-05-04",
       "top10_share": 0.4145,
-      "issuer_hhi": 3679.8,
+      "issuer_hhi": 3677.8,
       "gini": 0.9301
     },
     {
       "date": "2026-05-06",
       "top10_share": 0.4446,
-      "issuer_hhi": 3655.7,
+      "issuer_hhi": 3653.4,
       "gini": 0.9358
     },
     {
       "date": "2026-05-07",
       "top10_share": 0.4516,
-      "issuer_hhi": 3743.4,
+      "issuer_hhi": 3742.0,
       "gini": 0.9374
     },
     {
       "date": "2026-05-08",
       "top10_share": 0.4591,
-      "issuer_hhi": 3885.6,
+      "issuer_hhi": 3884.1,
       "gini": 0.9383
     },
     {
       "date": "2026-05-11",
       "top10_share": 0.4578,
-      "issuer_hhi": 3606.2,
+      "issuer_hhi": 3604.6,
       "gini": 0.9354
     },
     {
       "date": "2026-05-12",
       "top10_share": 0.4811,
-      "issuer_hhi": 3829.5,
+      "issuer_hhi": 3828.2,
       "gini": 0.9368
     },
     {
       "date": "2026-05-13",
       "top10_share": 0.466,
-      "issuer_hhi": 3825.7,
+      "issuer_hhi": 3824.3,
       "gini": 0.9374
     },
     {
       "date": "2026-05-14",
       "top10_share": 0.4587,
-      "issuer_hhi": 3944.2,
+      "issuer_hhi": 3942.6,
       "gini": 0.9371
     },
     {
       "date": "2026-05-15",
       "top10_share": 0.4554,
-      "issuer_hhi": 3887.6,
+      "issuer_hhi": 3886.5,
       "gini": 0.9375
     },
     {
       "date": "2026-05-18",
       "top10_share": 0.4944,
-      "issuer_hhi": 4042.4,
+      "issuer_hhi": 4041.4,
       "gini": 0.9396
     },
     {
       "date": "2026-05-19",
       "top10_share": 0.4854,
-      "issuer_hhi": 4236.6,
+      "issuer_hhi": 4235.4,
       "gini": 0.9397
     },
     {
       "date": "2026-05-20",
       "top10_share": 0.4878,
-      "issuer_hhi": 4289.2,
+      "issuer_hhi": 4288.3,
       "gini": 0.9423
     },
     {
       "date": "2026-05-21",
       "top10_share": 0.4505,
-      "issuer_hhi": 3931.1,
+      "issuer_hhi": 3930.1,
       "gini": 0.9372
     },
     {
       "date": "2026-05-22",
       "top10_share": 0.4527,
-      "issuer_hhi": 3932.5,
+      "issuer_hhi": 3930.5,
       "gini": 0.9364
     },
     {
       "date": "2026-05-26",
       "top10_share": 0.4437,
-      "issuer_hhi": 3513.5,
+      "issuer_hhi": 3511.1,
       "gini": 0.9338
     },
     {
       "date": "2026-05-27",
       "top10_share": 0.5119,
-      "issuer_hhi": 3788.0,
+      "issuer_hhi": 3787.1,
       "gini": 0.9491
     },
     {
       "date": "2026-05-28",
       "top10_share": 0.4743,
-      "issuer_hhi": 3712.6,
+      "issuer_hhi": 3711.9,
       "gini": 0.948
     }
   ],
   "reliability": {
     "source": "공공데이터포털 금융위원회_증권상품시세정보 (15094806) + 금융위원회_KRX상장종목정보 (15094775)",
     "as_of_business_day": "2026-05-28",
-    "last_updated_kst": "2026-05-31T21:51:18+09:00",
+    "last_updated_kst": "2026-05-31T21:58:39+09:00",
     "records_collected": 1514,
     "missing": 0,
     "validation": "passed",

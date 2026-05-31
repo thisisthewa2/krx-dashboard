@@ -176,7 +176,10 @@ def build_payload(
     )
     prev_today = attach_issuer(prev_today, imap)
     iss_prev = T.issuer_share(prev_today)
-    rank_df = T.rank_movement(iss_today, iss_prev)
+    # 순위 변동에서는 (미매핑) 그룹 제외 — 운용사 서열 변동이 핵심이라 노이즈가 됨.
+    iss_today_ranked = iss_today[iss_today["issuer"] != UNMAPPED_LABEL]
+    iss_prev_ranked = iss_prev[iss_prev["issuer"] != UNMAPPED_LABEL]
+    rank_df = T.rank_movement(iss_today_ranked, iss_prev_ranked)
 
     # ----- 신상품 출시 빈도 ---------------------------------------------------
     new_freq_df = T.new_listings_by_month(listing_history)
@@ -205,18 +208,26 @@ def build_payload(
     avg_vol = T.avg_volume_window(
         history.assign(date=pd.to_datetime(history["date"])), window=30
     )
-    dormant_list = (
-        no_trade_streak[dormant_mask]
-        .reset_index()
-        .rename(columns={"consecutive_no_trade_days": "consecutive_no_trade_days"})
+    # 종목명/운용사는 *history 의 가장 최근 등장* 기준으로 매핑한다.
+    # today 기준으로만 join 하면 상장폐지된 ETN 처럼 today 에 빠진 종목이 ticker 만 표시된다.
+    name_map = (
+        history.assign(date=pd.to_datetime(history["date"]))
+        .sort_values("date")
+        .groupby("ticker", as_index=False)
+        .last()[["ticker", "name", "issuer", "date"]]
+        .rename(columns={"date": "last_seen_date"})
     )
-    dormant_list = dormant_list.merge(
-        today[["ticker", "name", "issuer"]].drop_duplicates("ticker"),
-        on="ticker",
-        how="left",
-    )
+    dormant_list = no_trade_streak[dormant_mask].reset_index()
+    dormant_list = dormant_list.merge(name_map, on="ticker", how="left")
     dormant_list["avg_volume_30d"] = dormant_list["ticker"].map(avg_vol).fillna(0).astype(int)
-    dormant_list = dormant_list.sort_values("consecutive_no_trade_days", ascending=False).head(30)
+    # 상장폐지 후보(=마지막 등장일이 기준일과 큰 격차) 와 단순 휴면을 구분
+    target_ts = pd.Timestamp(target_date)
+    dormant_list["days_since_last_seen"] = (
+        (target_ts - dormant_list["last_seen_date"]).dt.days.fillna(0).astype(int)
+    )
+    dormant_list = dormant_list.sort_values(
+        "consecutive_no_trade_days", ascending=False
+    ).head(30)
 
     # ----- 집중도 추세 (최근 N일) --------------------------------------------
     trend = _build_concentration_trend(history, imap, days=20)
@@ -269,6 +280,8 @@ def build_payload(
                 "issuer": r.get("issuer"),
                 "consecutive_no_trade_days": int(r["consecutive_no_trade_days"]),
                 "avg_volume_30d": int(r["avg_volume_30d"]),
+                "days_since_last_seen": int(r.get("days_since_last_seen") or 0),
+                "delisted_candidate": int(r.get("days_since_last_seen") or 0) >= 14,
             }
             for _, r in dormant_list.iterrows()
         ],
@@ -310,7 +323,11 @@ def _count_new_listings_recent(
 
 
 def _shape_new_product_freq(df: pd.DataFrame, *, end: date, months: int) -> dict[str, Any]:
-    """프론트가 그리기 좋은 형태로 변형: months 축 + issuer 별 시리즈."""
+    """프론트가 그리기 좋은 형태로 변형: months 축 + issuer 별 시리즈.
+
+    (미매핑) 그룹은 *어떤 운용사가 라인업을 늘리는가* 라는 질문 자체에 답을 못 하므로
+    운용사 시장구조 화면에서는 제외한다.
+    """
     if df.empty:
         return {"months": [], "series": []}
 
@@ -319,7 +336,7 @@ def _shape_new_product_freq(df: pd.DataFrame, *, end: date, months: int) -> dict
     months_idx = pd.period_range(start_period, end_period, freq="M").strftime("%Y-%m").tolist()
 
     df = df.copy()
-    df = df[df["month"].isin(months_idx)]
+    df = df[df["month"].isin(months_idx) & (df["issuer"] != UNMAPPED_LABEL)]
     pivot = df.pivot_table(index="month", columns="issuer", values="count", fill_value=0)
     pivot = pivot.reindex(months_idx, fill_value=0)
     series = []

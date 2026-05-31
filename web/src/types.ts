@@ -68,6 +68,8 @@ export interface DormantRow {
   issuer: string | null;
   consecutive_no_trade_days: number;
   avg_volume_30d: number;
+  days_since_last_seen: number;
+  delisted_candidate: boolean;
 }
 
 export interface ConcentrationTrendPoint {
