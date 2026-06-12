@@ -1,6 +1,6 @@
 {
-  "as_of": "2026-06-10",
-  "generated_at": "2026-06-11T18:52:20+09:00",
+  "as_of": "2026-06-11",
+  "generated_at": "2026-06-12T18:46:18+09:00",
   "mode": "demo",
   "schema_version": "1.0.0",
   "kpis": {
@@ -332,8 +332,8 @@
         "issuer": "NH아문디자산운용",
         "data": [
           0,
-          45,
-          0,
+          44,
+          1,
           0,
           0,
           0
@@ -839,121 +839,121 @@
   ],
   "concentration_trend": [
     {
-      "date": "2026-05-14",
+      "date": "2026-05-15",
       "top10_share": 0.0783,
       "issuer_hhi": 1659.4,
       "gini": 0.4192
     },
     {
-      "date": "2026-05-15",
+      "date": "2026-05-18",
       "top10_share": 0.0786,
       "issuer_hhi": 1641.8,
       "gini": 0.4196
     },
     {
-      "date": "2026-05-18",
+      "date": "2026-05-19",
       "top10_share": 0.0917,
       "issuer_hhi": 1627.2,
       "gini": 0.427
     },
     {
-      "date": "2026-05-19",
+      "date": "2026-05-20",
       "top10_share": 0.0783,
       "issuer_hhi": 1644.3,
       "gini": 0.4226
     },
     {
-      "date": "2026-05-20",
+      "date": "2026-05-21",
       "top10_share": 0.0788,
       "issuer_hhi": 1627.3,
       "gini": 0.4193
     },
     {
-      "date": "2026-05-21",
+      "date": "2026-05-22",
       "top10_share": 0.0839,
       "issuer_hhi": 1631.2,
       "gini": 0.421
     },
     {
-      "date": "2026-05-22",
+      "date": "2026-05-25",
       "top10_share": 0.0825,
       "issuer_hhi": 1616.0,
       "gini": 0.4191
     },
     {
-      "date": "2026-05-25",
+      "date": "2026-05-26",
       "top10_share": 0.0797,
       "issuer_hhi": 1620.5,
       "gini": 0.4198
     },
     {
-      "date": "2026-05-26",
+      "date": "2026-05-27",
       "top10_share": 0.08,
       "issuer_hhi": 1644.3,
       "gini": 0.4245
     },
     {
-      "date": "2026-05-27",
+      "date": "2026-05-28",
       "top10_share": 0.0764,
       "issuer_hhi": 1658.0,
       "gini": 0.4212
     },
     {
-      "date": "2026-05-28",
+      "date": "2026-05-29",
       "top10_share": 0.0817,
       "issuer_hhi": 1643.2,
       "gini": 0.4251
     },
     {
-      "date": "2026-05-29",
+      "date": "2026-06-01",
       "top10_share": 0.0861,
       "issuer_hhi": 1645.1,
       "gini": 0.4277
     },
     {
-      "date": "2026-06-01",
+      "date": "2026-06-02",
       "top10_share": 0.0927,
       "issuer_hhi": 1620.1,
       "gini": 0.4286
     },
     {
-      "date": "2026-06-02",
+      "date": "2026-06-03",
       "top10_share": 0.0856,
       "issuer_hhi": 1632.6,
       "gini": 0.4231
     },
     {
-      "date": "2026-06-03",
+      "date": "2026-06-04",
       "top10_share": 0.0826,
       "issuer_hhi": 1636.7,
       "gini": 0.4257
     },
     {
-      "date": "2026-06-04",
+      "date": "2026-06-05",
       "top10_share": 0.0767,
       "issuer_hhi": 1653.8,
       "gini": 0.4195
     },
     {
-      "date": "2026-06-05",
+      "date": "2026-06-08",
       "top10_share": 0.0824,
       "issuer_hhi": 1661.2,
       "gini": 0.4265
     },
     {
-      "date": "2026-06-08",
+      "date": "2026-06-09",
       "top10_share": 0.0743,
       "issuer_hhi": 1646.0,
       "gini": 0.4189
     },
     {
-      "date": "2026-06-09",
+      "date": "2026-06-10",
       "top10_share": 0.0806,
       "issuer_hhi": 1650.8,
       "gini": 0.4203
     },
     {
-      "date": "2026-06-10",
+      "date": "2026-06-11",
       "top10_share": 0.0871,
       "issuer_hhi": 1612.7,
       "gini": 0.4205
@@ -961,8 +961,8 @@
   ],
   "reliability": {
     "source": "데모 합성 데이터 (실데이터 아님 — 종목명에 '합성-' 접미사)",
-    "as_of_business_day": "2026-06-10",
-    "last_updated_kst": "2026-06-11T18:52:20+09:00",
+    "as_of_business_day": "2026-06-11",
+    "last_updated_kst": "2026-06-12T18:46:18+09:00",
     "records_collected": 1058,
     "missing": 0,
     "validation": "passed",
