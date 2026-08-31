@@ -1,6 +1,6 @@
 {
   "as_of": "2026-08-28",
-  "generated_at": "2026-08-29T02:40:14+09:00",
+  "generated_at": "2026-08-31T20:47:29+09:00",
   "mode": "demo",
   "schema_version": "1.0.0",
   "kpis": {
@@ -962,7 +962,7 @@
   "reliability": {
     "source": "데모 합성 데이터 (실데이터 아님 — 종목명에 '합성-' 접미사)",
     "as_of_business_day": "2026-08-28",
-    "last_updated_kst": "2026-08-29T02:40:14+09:00",
+    "last_updated_kst": "2026-08-31T20:47:29+09:00",
     "records_collected": 1058,
     "missing": 0,
     "validation": "passed",
